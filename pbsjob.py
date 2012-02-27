@@ -38,7 +38,7 @@ parser.add_option("-e", "--stderr", action="store", dest="stderrFile", type="str
                   help="Write stderr to this file.")
 parser.add_option("-s", "--shared", action="store_true", default=False,
                   dest="shared", help="""Share the nodes.""")
-parser.add_option("-w", "--walltime", action="store", default=800,
+parser.add_option("-w", "--walltime", action="store", default=100,
                   dest="walltime", help="""Walltime in hours.""")
 (options, args) = parser.parse_args()
 
@@ -124,7 +124,6 @@ else:
 devnull = open(os.devnull) # also used later!
 errcode = subprocess.call(["ssh", login, "ls", "%s/%s"%(workdir, args[0])],
                           stdout=devnull, stderr=devnull)
-
 doCopy = True # assume a file has to be copied first
 if(errcode == 0): # file already exists, ask to overwrite
     decision = raw_input("The file %s already exists in the remote location!\nOverwrite [y/n]? Answering 'n' will use the remote file as is. "%args[0])
@@ -134,14 +133,12 @@ if(errcode == 0): # file already exists, ask to overwrite
     else:
         doCopy = False
 
-
 if(doCopy):
-    errcode = subprocess.call(["scp", args[0], "%s:%s"%(login,workdir)],
-                      stdout=devnull, stderr=devnull)
+    errcode = subprocess.call("scp %s %s:%s"%(args[0],login,workdir), stdout=devnull,
+                              stderr=devnull, shell=True, cwd=os.environ["PWD"])
     if(errcode != 0):
-        print("Something went wrong copying the program to be executed! Aborting!")
+        print >> sys.stderr, "Something went wrong copying the program to be executed! Aborting!"
         sys.exit(1)
-    
 
 # now generate a jobscript:
 # We assume OpenMPI in recent versions - in these versions, it is unnecessary
@@ -156,6 +153,7 @@ r"""#!/bin/sh
 ### Number of nodes, PPN, shared
 #PBS -l nodes=%s:ppn=%s%s
 #PBS -l walltime=%s:00:00
+#PBS -l ncpus=%s
 
 . $HOME/.bashrc
 
@@ -167,7 +165,7 @@ hostname
 mpirun %s
 """\
 %(jobName, stdoutFile, stderrFile, options.nodes, options.ppn,
-  sharedString, options.walltime, args[0])
+  sharedString, options.walltime, options.nodes*options.ppn, args[0])
 
 # write jobscript to a temporary file:
 jobFile = tempfile.NamedTemporaryFile(suffix=suffix, dir="")
@@ -187,6 +185,6 @@ errcode = subprocess.call(["ssh", login, "cd %s; qsub %s"
                           %(workdir, jobFile.name.split("/")[-1])])
                           # extract jobscript file's basename
 if(errcode != 0):
-    print("Something went wrong submitting the jobscript! Aborting!")
+    print >> sys.stderr, "Something went wrong submitting the job! Aborting!"
 else:
     print("Job submitted, using %s CPUs in total."%(options.nodes*options.ppn))
