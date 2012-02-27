@@ -87,6 +87,8 @@ if(workdir == ""):
     workdir = os.environ["PWD"]
     print("No working directory specified, using %s instead."%workdir)
 
+print("Working in %s:%s."%(login, workdir))
+
 if(suffix == ""):
     suffix = ".jobscript"
     print("No suffix for jobscript given, using suffix %s instead."%suffix)
