@@ -32,9 +32,9 @@ parser.add_option("-p", "--ppn", action="store", dest="ppn", type="int",
                   help="Number of processes per node.")
 parser.add_option("-a", "--name", action="store", dest="name", type="string",
                   help="Job name.")
-parser.add_option("-o", action="store", dest="stdoutFile", type="string",
+parser.add_option("-o", "--stdout", action="store", dest="stdoutFile", type="string",
                   help="Write stdout to this file.")
-parser.add_option("-e", action="store", dest="stderrFile", type="string",
+parser.add_option("-e", "--stderr", action="store", dest="stderrFile", type="string",
                   help="Write stderr to this file.")
 parser.add_option("-s", "--shared", action="store_true", default=False,
                   dest="shared", help="""Share the nodes.""")
