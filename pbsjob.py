@@ -124,15 +124,13 @@ errcode = subprocess.call(["ssh", login, "ls", "%s/%s"%(workdir, args[0])],
                           stdout=devnull, stderr=devnull)
 
 if(errcode == 0): # file already exists, ask to overwrite
-    decision = raw_input("The file %s already exists in the remote location!\nOverwrite [y/n]? "%args[0])
-    if(decision not in ["y", "Y", "yes", "Yes", "YES"]):
-        sys.exit(0)
-
-errcode = subprocess.call(["scp", args[0], "%s:%s"%(login,workdir)],
+    decision = raw_input("The file %s already exists in the remote location!\nOverwrite [y/n]? Answering 'n' will use the remote file as is. "%args[0])
+    if(decision in ["y", "Y", "yes", "Yes", "YES"]):
+        errcode = subprocess.call(["scp", args[0], "%s:%s"%(login,workdir)],
                           stdout=devnull, stderr=devnull)
-if(errcode != 0):
-    print("Something went wrong copying the program to be executed! Aborting!")
-    sys.exit(1)
+        if(errcode != 0):
+            print("Something went wrong copying the program to be executed! Aborting!")
+            sys.exit(1)
 
 # now generate a jobscript:
 # We assume OpenMPI in recent versions - in these versions, it is unnecessary
@@ -155,7 +153,7 @@ cd $PBS_O_WORKDIR
 echo "Host"
 hostname
 
-mpirun -hostfile $PBS_NODEFILE -n (echo $PBS_NODEFILE | wc -l) %s
+mpirun %s
 """\
 %(jobName, stdoutFile, stderrFile, options.nodes, options.ppn,
   sharedString, options.walltime, args[0])
@@ -181,4 +179,3 @@ if(errcode != 0):
     print("Something went wrong submitting the jobscript! Aborting!")
 else:
     print("Job submitted, using %s CPUs in total."%(options.nodes*options.ppn))
-
