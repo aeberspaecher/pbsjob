@@ -42,8 +42,9 @@ Submitting scripts
 Type
 
 ::
+
   pbsjob.py --nodes 2 --ppn 8 --name MyName --stdout bla.out
-     --stderr bla.err --walltime 2 ./scriptToRun
+  --stderr bla.err --walltime 2 ./scriptToRun
 
 to submit the file ``./scriptToRun`` to the remote machine given in the
 configuration file. The job will use 2 nodes with 8 processes per node,
