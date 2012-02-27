@@ -123,14 +123,23 @@ devnull = open(os.devnull) # also used later!
 errcode = subprocess.call(["ssh", login, "ls", "%s/%s"%(workdir, args[0])],
                           stdout=devnull, stderr=devnull)
 
+doCopy = True # assume a file has to be copied first
 if(errcode == 0): # file already exists, ask to overwrite
     decision = raw_input("The file %s already exists in the remote location!\nOverwrite [y/n]? Answering 'n' will use the remote file as is. "%args[0])
+
     if(decision in ["y", "Y", "yes", "Yes", "YES"]):
-        errcode = subprocess.call(["scp", args[0], "%s:%s"%(login,workdir)],
-                          stdout=devnull, stderr=devnull)
-        if(errcode != 0):
-            print("Something went wrong copying the program to be executed! Aborting!")
-            sys.exit(1)
+        doCopy = True
+    else:
+        doCopy = False
+
+
+if(doCopy):
+    errcode = subprocess.call(["scp", args[0], "%s:%s"%(login,workdir)],
+                      stdout=devnull, stderr=devnull)
+    if(errcode != 0):
+        print("Something went wrong copying the program to be executed! Aborting!")
+        sys.exit(1)
+    
 
 # now generate a jobscript:
 # We assume OpenMPI in recent versions - in these versions, it is unnecessary
@@ -172,9 +181,9 @@ if(errcode != 0):
     sys.exit(1)
 
 # now, qsub the jobscript
-# extract jobscript file's basename
 errcode = subprocess.call(["ssh", login, "cd %s; qsub %s"
                           %(workdir, jobFile.name.split("/")[-1])])
+                          # extract jobscript file's basename
 if(errcode != 0):
     print("Something went wrong submitting the jobscript! Aborting!")
 else:
