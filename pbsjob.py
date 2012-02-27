@@ -95,22 +95,22 @@ if(suffix == ""):
 
 fil.close()
 
-# generate additional filenames if necessary:
-if(not options.stdoutFile):
-    stdoutFile = args[0]+".stdout"
-    print("No file for stdout given, will use %s instead."%stdoutFile)
-else:
-    stdoutFile = options.stdoutFile
-if(not options.stderrFile):
-    stderrFile = args[0]+".stderr"
-    print("No file for stderr given, will use %s instead."%stderrFile)
-else:
-    stderrFile = options.stderrFile
-
 if(not options.name):
     jobName = args[0]
 else:
     jobName = options.name
+
+# generate additional filenames if necessary:
+if(not options.stdoutFile):
+    stdoutFile = jobName+".stdout"
+    print("No file for stdout given, will use %s instead."%stdoutFile)
+else:
+    stdoutFile = options.stdoutFile
+if(not options.stderrFile):
+    stderrFile = jobName+".stderr"
+    print("No file for stderr given, will use %s instead."%stderrFile)
+else:
+    stderrFile = options.stderrFile
 
 if(options.shared): # if shared is used, prepare a suitable string for jobscript
     sharedString = "#shared"

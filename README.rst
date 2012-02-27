@@ -57,7 +57,7 @@ you want to overwrite the remote file or use the existing file.
 
 The arguments ``--name``, ``--walltime``, ``--stdout`` and ``--stderr`` are
 optional. If no name is given, the script's name is used. The walltime defaults
-to 800 hours. The output files default to the scriptname suffixed by ".out" and
+to 800 hours. The output files default to the job name suffixed by ".out" and
 ".err", respectively.
 
 You can get help by typing
