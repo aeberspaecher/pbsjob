@@ -102,12 +102,12 @@ else:
 
 # generate additional filenames if necessary:
 if(not options.stdoutFile):
-    stdoutFile = jobName+".stdout"
+    stdoutFile = jobName+".out"
     print("No file for stdout given, will use %s instead."%stdoutFile)
 else:
     stdoutFile = options.stdoutFile
 if(not options.stderrFile):
-    stderrFile = jobName+".stderr"
+    stderrFile = jobName+".err"
     print("No file for stderr given, will use %s instead."%stderrFile)
 else:
     stderrFile = options.stderrFile
