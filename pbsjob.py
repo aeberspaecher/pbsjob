@@ -80,7 +80,7 @@ try:
 except:
     suffix = ".jobscript"
     print("No suffix for jobscript given, using suffix %s instead."%suffix)
-    
+
 # catch the case of workdir being an empty line (may happen with text
 # editors that automatically append a new line at the end of each file)
 if(workdir == ""):
@@ -99,9 +99,13 @@ fil.close()
 if(not options.stdoutFile):
     stdoutFile = args[0]+".stdout"
     print("No file for stdout given, will use %s instead."%stdoutFile)
+else:
+    stdoutFile = options.stdoutFile
 if(not options.stderrFile):
     stderrFile = args[0]+".stderr"
     print("No file for stderr given, will use %s instead."%stderrFile)
+else:
+    stderrFile = options.stderrFile
 
 if(not options.name):
     jobName = args[0]
@@ -129,7 +133,7 @@ errcode = subprocess.call(["scp", args[0], "%s:%s"%(login,workdir)],
 if(errcode != 0):
     print("Something went wrong copying the program to be executed! Aborting!")
     sys.exit(1)
-    
+
 # now generate a jobscript:
 # We assume OpenMPI in recent versions - in these versions, it is unnecessary
 # to specify the hostnames and number of processes
@@ -141,7 +145,7 @@ r"""#!/bin/sh
 #PBS -o %s
 #PBS -e %s
 ### Number of nodes, PPN, shared
-#PBS -l nodes=%s:%s%s
+#PBS -l nodes=%s:ppn=%s%s
 #PBS -l walltime=%s:00:00
 
 . $HOME/.bashrc
@@ -151,9 +155,10 @@ cd $PBS_O_WORKDIR
 echo "Host"
 hostname
 
-mpirun %s
+mpirun -hostfile $PBS_NODEFILE -n (echo $PBS_NODEFILE | wc -l) %s
 """\
-%(jobName, stdoutFile, stderrFile, options.nodes, options.ppn, sharedString, options.walltime, args[0])
+%(jobName, stdoutFile, stderrFile, options.nodes, options.ppn,
+  sharedString, options.walltime, args[0])
 
 # write jobscript to a temporary file:
 jobFile = tempfile.NamedTemporaryFile(suffix=suffix, dir="")
@@ -176,5 +181,4 @@ if(errcode != 0):
     print("Something went wrong submitting the jobscript! Aborting!")
 else:
     print("Job submitted, using %s CPUs in total."%(options.nodes*options.ppn))
-
 

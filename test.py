@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/home/eberspae/local/bin/python
 #-*- coding:utf-8 -*-
 
 from mpi4py import MPI
