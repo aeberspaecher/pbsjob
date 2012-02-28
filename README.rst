@@ -69,18 +69,21 @@ You can get help by typing
 Additional options
 ------------------
 
-The clean option deletes all remote files suffixed by the string given in the
-configuration file, i.e.
+- The ``--clean`` option deletes all remote files suffixed by the string
+  given in the configuration file, i.e.
 
-::
+  ::
 
-  pbsjob.py --clean
+    pbsjob.py --clean
 
-with the example ``pbsjob.dat`` given above issues the command
+  with the example ``pbsjob.dat`` given above issues the command
 
-::
+  ::
 
-  ssh user@machine.domain rm remoteFolder/*.jobscript
+    ssh user@machine.domain rm remoteFolder/*.jobscript
+
+- If the option ``--nompi`` is used, the command will *not* be run after
+  ``mpirun``. This might help for OpenMP jobs.
 
 Pitfalls
 --------

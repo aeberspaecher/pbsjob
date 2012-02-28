@@ -44,6 +44,8 @@ parser.add_option("-w", "--walltime", action="store", default=100,
                   dest="walltime", help="""Walltime in hours.""")
 parser.add_option("-q", "--queue", action="store", dest="queue", type="string",
                   help="Name of the queue to use.")
+parser.add_option("-m", "--nompi", action="store_true", default=False,
+                  dest="noMPI", help="""Do not use MPI.""")
 (options, args) = parser.parse_args()
 
 # obtain login information from file:
@@ -164,6 +166,11 @@ if(doCopy):
 # now generate a jobscript:
 # We assume OpenMPI in recent versions - in these versions, it is unnecessary
 # to specify the hostnames and number of processes
+if(options.noMPI):
+    command = args[0]
+else:
+    command = "mpirun %s"%args[0]
+
 jobscript = \
 r"""#!/bin/sh
 ### Job name
@@ -185,10 +192,10 @@ cd $PBS_O_WORKDIR
 echo "Host"
 hostname
 
-mpirun %s
+%s
 """\
 %(jobName, stdoutFile, stderrFile, options.nodes, options.ppn,
-  sharedString, options.walltime, options.nodes*options.ppn, queue, args[0])
+  sharedString, options.walltime, options.nodes*options.ppn, queue, command)
 
 # write jobscript to a temporary file:
 jobFile = tempfile.NamedTemporaryFile(suffix=suffix, dir="")
