@@ -42,6 +42,8 @@ parser.add_option("-s", "--shared", action="store_true", default=False,
                   dest="shared", help="""Share the nodes.""")
 parser.add_option("-w", "--walltime", action="store", default=100,
                   dest="walltime", help="""Walltime in hours.""")
+parser.add_option("-q", "--queue", action="store", dest="queue", type="string",
+                  help="Name of the queue to use.")
 (options, args) = parser.parse_args()
 
 # obtain login information from file:
@@ -113,6 +115,11 @@ if(not options.ppn):
     parser.error("Specify the number of processes per nodes using the -p option!")
 if(not options.name):
     print("No job name given, will use the filename instead.")
+if(not options.queue):
+    queue = "parallel"
+    print("No queue given, defaulting to '%s' instead!"%queue)
+else:
+    queue = options.queue
 
 # generate additional filenames if necessary:
 if(not options.stdoutFile):
@@ -168,6 +175,8 @@ r"""#!/bin/sh
 #PBS -l nodes=%s:ppn=%s%s
 #PBS -l walltime=%s:00:00
 #PBS -l ncpus=%s
+### Name of queue
+#PBS -q %s
 
 . $HOME/.bashrc
 
@@ -179,7 +188,7 @@ hostname
 mpirun %s
 """\
 %(jobName, stdoutFile, stderrFile, options.nodes, options.ppn,
-  sharedString, options.walltime, options.nodes*options.ppn, args[0])
+  sharedString, options.walltime, options.nodes*options.ppn, queue, args[0])
 
 # write jobscript to a temporary file:
 jobFile = tempfile.NamedTemporaryFile(suffix=suffix, dir="")

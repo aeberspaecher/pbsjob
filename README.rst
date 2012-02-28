@@ -43,7 +43,7 @@ Type
 ::
 
   pbsjob.py --nodes 2 --ppn 8 --name MyName --stdout bla.out
-      --stderr bla.err --walltime 2 ./scriptToRun
+      --stderr bla.err --walltime 2 --queue queueName ./scriptToRun
 
 to submit the file ``./scriptToRun`` to the remote machine given in the
 configuration file. The job will use 2 nodes with 8 processes per node,
@@ -54,10 +54,11 @@ The job's name will be "MyName".
 If the file "scriptToRun" already exists on the remote, you are asked whether
 you want to overwrite the remote file or use the existing file.
 
-The arguments ``--name``, ``--walltime``, ``--stdout`` and ``--stderr`` are
-optional. If no name is given, the script's name is used as the job name.
-The walltime defaults to 100 hours. The output files default to the job name
-suffixed by ".out" and ".err", respectively.
+The arguments ``--name``, ``--queue``, ``--walltime``, ``--stdout`` and
+``--stderr`` are optional. If no name is given, the script's name is used as
+the job name. The walltime defaults to 100 hours. The output files default
+to the job name suffixed by ".out" and ".err", respectively. The default
+queue is "parallel".
 
 You can get help by typing
 
