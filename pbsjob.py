@@ -32,6 +32,8 @@ parser.add_option("-p", "--ppn", action="store", dest="ppn", type="int",
                   help="Number of processes per node.")
 parser.add_option("-a", "--name", action="store", dest="name", type="string",
                   help="Job name.")
+parser.add_option("-c", "--clean", action="store_true", dest="doClean",
+                  help="Clean jobscripts.")
 parser.add_option("-o", "--stdout", action="store", dest="stdoutFile", type="string",
                   help="Write stdout to this file.")
 parser.add_option("-e", "--stderr", action="store", dest="stderrFile", type="string",
@@ -41,16 +43,6 @@ parser.add_option("-s", "--shared", action="store_true", default=False,
 parser.add_option("-w", "--walltime", action="store", default=100,
                   dest="walltime", help="""Walltime in hours.""")
 (options, args) = parser.parse_args()
-
-if(not options.nodes):
-    parser.error("Specify the number of nodes using the -n option!")
-if(not options.ppn):
-    parser.error("Specify the number of processes per nodes using the -p option!")
-if(not options.name):
-    print("No job name given, will use the filename instead.")
-
-if(len(args) == 0):
-    parser.error("Specify a file to run with PBS!")
 
 # obtain login information from file:
 settingsDirectory = os.environ["HOME"]
@@ -97,10 +89,30 @@ if(suffix == ""):
 
 fil.close()
 
+devnull = open(os.devnull) # used for output redirection
+
+if(options.doClean): # *only* perform cleaning and then quit
+    decision = raw_input("Remove *%s in %s:%s [y/n]? "%(suffix, login, workdir))
+    if(decision in ["y", "yes", "Yes", "YES"]):
+        errcode = subprocess.call("ssh %s rm %s/*%s"%(login, workdir.strip(), suffix),
+                                  shell=True)
+        if(errcode != 0):
+            print("Deletion of jobscripts failed!")
+            sys.exit(1)
+            
+    sys.exit(0)
+
 if(not options.name):
     jobName = args[0]
 else:
     jobName = options.name
+
+if(not options.nodes):
+    parser.error("Specify the number of nodes using the -n option!")
+if(not options.ppn):
+    parser.error("Specify the number of processes per nodes using the -p option!")
+if(not options.name):
+    print("No job name given, will use the filename instead.")
 
 # generate additional filenames if necessary:
 if(not options.stdoutFile):
@@ -119,9 +131,11 @@ if(options.shared): # if shared is used, prepare a suitable string for jobscript
 else:
     sharedString = ""
 
+if(len(args) == 0):
+    parser.error("Specify a file to run with PBS!")
+
 # now try to find out if the script/program to execute already exits in the
 # remote directory - if so, prompt before it is overwritten
-devnull = open(os.devnull) # also used later!
 errcode = subprocess.call(["ssh", login, "ls", "%s/%s"%(workdir, args[0])],
                           stdout=devnull, stderr=devnull)
 doCopy = True # assume a file has to be copied first

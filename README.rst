@@ -5,9 +5,9 @@ pbsjob
 About
 =====
 
-``pbsjob`` is a small script useful in the submission of jobs to clusters
-running the PBS scheduler. It was made to submit jobs from a workstation
-without being required to remember how to write jobscripts.
+``pbsjob`` is a dirty little script useful in the submission of jobs to
+clusters running the PBS scheduler. It was made to submit jobs from a
+workstation without being required to remember how to write jobscripts.
 
 Typical use case
 ================
@@ -32,9 +32,8 @@ login node as well as a suffix for jobscript filenames. An example is given
 here::
 
   user@machine.domain
-  MPIexample
+  remoteFolder
   .jobscript
-
 
 Submitting scripts
 ------------------
@@ -56,15 +55,48 @@ If the file "scriptToRun" already exists on the remote, you are asked whether
 you want to overwrite the remote file or use the existing file.
 
 The arguments ``--name``, ``--walltime``, ``--stdout`` and ``--stderr`` are
-optional. If no name is given, the script's name is used. The walltime defaults
-to 800 hours. The output files default to the job name suffixed by ".out" and
-".err", respectively.
+optional. If no name is given, the script's name is used as the job name.
+The walltime defaults to 100 hours. The output files default to the job name
+suffixed by ".out" and ".err", respectively.
 
 You can get help by typing
 
 ::
 
   ./pbsjob.py --help
+
+Additional options
+------------------
+
+The clean option deletes all remote files suffixed by the string given in the
+configuration file, i.e.
+
+::
+
+  pbsjob.py --clean
+
+with the example ``pbsjob.dat`` given above issues the command
+
+::
+
+  ssh user@machine.domain rm remoteFolder/*.jobscript
+
+Pitfalls
+--------
+
+The script tries to transfer the script to run to the remote machine. This
+may cause you trouble in case you don't want a script to be transfered, but
+you rather want a composite command such as
+
+::
+
+  time python myScript.py
+
+to be execute on the remote. In this case, you cannot use ``pbsjob.py``
+without wrapping your command in a shell script.
+
+Also you may want to be careful with executable files compiled on your local
+machine - they may not be able to run on the remote architecture.
 
 Modifications
 =============
