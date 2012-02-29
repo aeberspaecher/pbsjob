@@ -46,7 +46,7 @@ parser.add_option("-q", "--queue", action="store", dest="queue", type="string",
                   help="Name of the queue to use.")
 parser.add_option("-m", "--nompi", action="store_true", default=False,
                   dest="noMPI", help="""Do not use MPI.""")
-parser.add_option("-c", "--ncpus", action="store_true", default=False,
+parser.add_option("-u", "--ncpus", action="store_true", default=False,
                   dest="useNCPUs", help="""Include ncpus in jobscript.""")
 (options, args) = parser.parse_args()
 
@@ -172,9 +172,9 @@ if(options.noMPI):
     command = args[0]
 else:
     command = "mpirun %s"%args[0]
-if(options.useNCPUs):
+if(options.nCPUs):
     ncpustring = "#PBS -l ncpus=%s"%(options.nodes*options.ppn)
-else
+else:
     ncpustring = ""
 
 jobscript = \
@@ -202,6 +202,7 @@ hostname
 %s
 """\
 %(jobName, stdoutFile, stderrFile, options.nodes, options.ppn,
+  sharedString, options.walltime, ncpustring, queue, command)
 
 # write jobscript to a temporary file:
 jobFile = tempfile.NamedTemporaryFile(suffix=suffix, dir="")
