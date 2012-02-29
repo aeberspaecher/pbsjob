@@ -82,8 +82,12 @@ Additional options
 
     ssh user@machine.domain rm remoteFolder/*.jobscript
 
-- If the option ``--nompi`` is used, the command will *not* be run after
-  ``mpirun``. This might help for OpenMP jobs.
+- If the option ``--nompi`` is used, the submitted script will *not* be run
+  after a ``mpirun`` command. This might help for OpenMP jobs.
+
+- If ``--ncpus`` is present, the script will include the PBS ncpus option
+  with the value nodes*(processes per node). This seems to be necessary on
+  the author's cluster in some cases.
 
 Pitfalls
 --------

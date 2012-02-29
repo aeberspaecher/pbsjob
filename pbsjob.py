@@ -46,6 +46,8 @@ parser.add_option("-q", "--queue", action="store", dest="queue", type="string",
                   help="Name of the queue to use.")
 parser.add_option("-m", "--nompi", action="store_true", default=False,
                   dest="noMPI", help="""Do not use MPI.""")
+parser.add_option("-c", "--ncpus", action="store_true", default=False,
+                  dest="useNCPUs", help="""Include ncpus in jobscript.""")
 (options, args) = parser.parse_args()
 
 # obtain login information from file:
@@ -170,6 +172,10 @@ if(options.noMPI):
     command = args[0]
 else:
     command = "mpirun %s"%args[0]
+if(options.useNCPUs):
+    ncpustring = "#PBS -l ncpus=%s"%(options.nodes*options.ppn)
+else
+    ncpustring = ""
 
 jobscript = \
 r"""#!/bin/sh
@@ -181,9 +187,10 @@ r"""#!/bin/sh
 ### Number of nodes, PPN, shared
 #PBS -l nodes=%s:ppn=%s%s
 #PBS -l walltime=%s:00:00
-#PBS -l ncpus=%s
+%s
 ### Name of queue
 #PBS -q %s
+#PBS -p +1023
 
 . $HOME/.bashrc
 
@@ -195,7 +202,6 @@ hostname
 %s
 """\
 %(jobName, stdoutFile, stderrFile, options.nodes, options.ppn,
-  sharedString, options.walltime, options.nodes*options.ppn, queue, command)
 
 # write jobscript to a temporary file:
 jobFile = tempfile.NamedTemporaryFile(suffix=suffix, dir="")
