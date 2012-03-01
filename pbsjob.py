@@ -33,7 +33,7 @@ parser.add_option("--ppn", action="store", dest="ppn", type="int",
 parser.add_option("--name", action="store", dest="name", type="string",
                   help="Job name.")
 parser.add_option("--clean", action="store_true", dest="doClean",
-                  help="Clean jobscripts.")
+                  help="Clean jobscripts on the remote and quit.")
 parser.add_option("--stdout", action="store", dest="stdoutFile", type="string",
                   help="Write stdout to this file.")
 parser.add_option("--stderr", action="store", dest="stderrFile", type="string",
@@ -55,7 +55,9 @@ parser.add_option("--priority", action="store", dest="priority", type="int",
 # obtain login information from file:
 settingsDirectory = os.environ["HOME"]
 settingsFileName = "pbsjob.dat"
-# The file shall contain the line: user@login.machine.tld
+# The file shall contain the lines
+# user@login.machine.tld
+# workingDirectoryOnRemoteMachine
 try:
     if(settingsDirectory[-1] != "/"):
         settingsDirectory += "/"
@@ -68,12 +70,14 @@ try:
     login = fil.readline().strip()
 except:
     print >> sys.stderr, "Could not read host from %s"%fil
+    sys.exit(1)
 
 try:
     workdir = fil.readline().strip()
 except:
     workdir = os.environ["PWD"]
     print("No working directory specified, using %s instead."%workdir)
+    sys.exit(1)
 
 try:
     suffix = fil.readline().strip()
@@ -188,7 +192,7 @@ r"""#!/bin/sh
 %s
 ### Name of queue
 #PBS -q %s
-#PBS -p +1023
+#PBS -p %s
 
 . $HOME/.bashrc
 
@@ -200,7 +204,8 @@ hostname
 %s
 """\
 %(jobName, stdoutFile, stderrFile, options.nodes, options.ppn,
-  sharedString, options.walltime, ncpustring, options.queue, command)
+  sharedString, options.walltime, ncpustring, options.queue, options.priority,
+  command)
 
 # write jobscript to a temporary file:
 jobFile = tempfile.NamedTemporaryFile(suffix=suffix, dir="")
@@ -223,3 +228,5 @@ if(errcode != 0):
     print >> sys.stderr, "Something went wrong submitting the job! Aborting!"
 else:
     print("Job submitted, using %s CPUs in total."%(options.nodes*options.ppn))
+
+# TODO: figure out how to run hybrid OpenMP/MPI jobs
