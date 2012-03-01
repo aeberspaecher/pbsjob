@@ -26,28 +26,30 @@ import os, sys
 # parse command line options:
 usage = "usage: %prog -n value -p value. Get help with --help."
 parser = OptionParser(usage=usage, version="%prog 0.1")
-parser.add_option("-n", "--nodes", action="store", dest="nodes", type="int",
+parser.add_option("--nodes", action="store", dest="nodes", type="int",
                   help="Number of nodes.")
-parser.add_option("-p", "--ppn", action="store", dest="ppn", type="int",
+parser.add_option("--ppn", action="store", dest="ppn", type="int",
                   help="Number of processes per node.")
-parser.add_option("-a", "--name", action="store", dest="name", type="string",
+parser.add_option("--name", action="store", dest="name", type="string",
                   help="Job name.")
-parser.add_option("-c", "--clean", action="store_true", dest="doClean",
+parser.add_option("--clean", action="store_true", dest="doClean",
                   help="Clean jobscripts.")
-parser.add_option("-o", "--stdout", action="store", dest="stdoutFile", type="string",
+parser.add_option("--stdout", action="store", dest="stdoutFile", type="string",
                   help="Write stdout to this file.")
-parser.add_option("-e", "--stderr", action="store", dest="stderrFile", type="string",
+parser.add_option("--stderr", action="store", dest="stderrFile", type="string",
                   help="Write stderr to this file.")
-parser.add_option("-s", "--shared", action="store_true", default=False,
+parser.add_option("--shared", action="store_true", default=False,
                   dest="shared", help="""Share the nodes.""")
-parser.add_option("-w", "--walltime", action="store", default=100,
+parser.add_option("--walltime", action="store", default=100,
                   dest="walltime", help="""Walltime in hours.""")
-parser.add_option("-q", "--queue", action="store", dest="queue", type="string",
-                  help="Name of the queue to use.")
-parser.add_option("-m", "--nompi", action="store_true", default=False,
+parser.add_option("--queue", action="store", dest="queue", type="string",
+                  default="parallel", help="Name of the queue to use.")
+parser.add_option("--nompi", action="store_true", default=False,
                   dest="noMPI", help="""Do not use MPI.""")
-parser.add_option("-u", "--ncpus", action="store_true", default=False,
+parser.add_option("--ncpus", action="store_true", default=False,
                   dest="useNCPUs", help="""Include ncpus in jobscript.""")
+parser.add_option("--priority", action="store", dest="priority", type="int",
+                  default=0, help="Process priority.")
 (options, args) = parser.parse_args()
 
 # obtain login information from file:
@@ -108,22 +110,17 @@ if(options.doClean): # *only* perform cleaning and then quit
             
     sys.exit(0)
 
+fileBaseName = args[0].split("/")[-1] # extract base name
 if(not options.name):
-    jobName = args[0]
+    jobName = fileBaseName
+    print("No job name given, using %s instead."%jobName)
 else:
     jobName = options.name
 
 if(not options.nodes):
-    parser.error("Specify the number of nodes using the -n option!")
+    parser.error("Specify the number of nodes using the --nodes option!")
 if(not options.ppn):
-    parser.error("Specify the number of processes per nodes using the -p option!")
-if(not options.name):
-    print("No job name given, will use the filename instead.")
-if(not options.queue):
-    queue = "parallel"
-    print("No queue given, defaulting to '%s' instead!"%queue)
-else:
-    queue = options.queue
+    parser.error("Specify the number of processes per nodes using the --ppn option!")
 
 # generate additional filenames if necessary:
 if(not options.stdoutFile):
@@ -147,7 +144,7 @@ if(len(args) == 0):
 
 # now try to find out if the script/program to execute already exits in the
 # remote directory - if so, prompt before it is overwritten
-errcode = subprocess.call(["ssh", login, "ls", "%s/%s"%(workdir, args[0])],
+errcode = subprocess.call(["ssh", login, "ls", "%s/%s"%(workdir, fileBaseName)],
                           stdout=devnull, stderr=devnull)
 doCopy = True # assume a file has to be copied first
 if(errcode == 0): # file already exists, ask to overwrite
@@ -159,8 +156,9 @@ if(errcode == 0): # file already exists, ask to overwrite
         doCopy = False
 
 if(doCopy):
-    errcode = subprocess.call("scp %s %s:%s"%(args[0],login,workdir), stdout=devnull,
-                              stderr=devnull, shell=True, cwd=os.environ["PWD"])
+    errcode = subprocess.call("scp %s %s:%s"%(fileBaseName, login, workdir),
+                              stdout=devnull, stderr=devnull, shell=True,
+                              cwd=os.environ["PWD"])
     if(errcode != 0):
         print >> sys.stderr, "Something went wrong copying the program to be executed! Aborting!"
         sys.exit(1)
@@ -202,7 +200,7 @@ hostname
 %s
 """\
 %(jobName, stdoutFile, stderrFile, options.nodes, options.ppn,
-  sharedString, options.walltime, ncpustring, queue, command)
+  sharedString, options.walltime, ncpustring, options.queue, command)
 
 # write jobscript to a temporary file:
 jobFile = tempfile.NamedTemporaryFile(suffix=suffix, dir="")

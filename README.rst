@@ -43,22 +43,37 @@ Type
 ::
 
   pbsjob.py --nodes 2 --ppn 8 --name MyName --stdout bla.out
-      --stderr bla.err --walltime 2 --queue queueName ./scriptToRun
+      --stderr bla.err --walltime 2 --queue queueName
+      --priority 23 ./scriptToRun
 
 to submit the file ``./scriptToRun`` to the remote machine given in the
 configuration file. The job will use 2 nodes with 8 processes per node,
 standard output is written to ``bla.out`` in the working directory, standard
 error is written to ``bla.err`` respectively. The walltime will be 2 hours.
-The job's name will be "MyName".
+The job's name will be "MyName". The queue "queueName" will be used and the
+job's priority will be 23.
 
 If the file "scriptToRun" already exists on the remote, you are asked whether
 you want to overwrite the remote file or use the existing file.
 
 The arguments ``--name``, ``--queue``, ``--walltime``, ``--stdout`` and
-``--stderr`` are optional. If no name is given, the script's name is used as
-the job name. The walltime defaults to 100 hours. The output files default
-to the job name suffixed by ".out" and ".err", respectively. The default
-queue is "parallel".
+``--stderr``, ``--priority`` are optional:
+
+- If ``--name jobName`` is not given, the script's name is used as the job
+  name, too.
+- If  ``--walltime wallTimeInHours`` is not given, the walltime defaults to
+  100 hours.
+- If ``--stdout fileForStdout`` or ``--stderr fileForStderr`` are not given,
+  the output files default to the job name suffixed by ".out" and ".err",
+  respectively.
+- If ``--queue queueName`` is not given, the default queue will be "parallel".
+- If ``--priority number`` is not given, the job priority defaults to 0.
+
+By using all default arguments, the shortest allowed call is
+
+::
+
+  pbsjob.py --nodes 1 --ppn 2 ./script
 
 You can get help by typing
 
@@ -81,6 +96,8 @@ Additional options
   ::
 
     ssh user@machine.domain rm remoteFolder/*.jobscript
+
+  Nothing else will be done.
 
 - If the option ``--nompi`` is used, the submitted script will *not* be run
   after a ``mpirun`` command. This might help for OpenMP jobs.
