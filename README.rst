@@ -123,6 +123,14 @@ without wrapping your command in a shell script.
 Also you may want to be careful with executable files compiled on your local
 machine - they may not be able to run on the remote architecture.
 
+Assumptions made by the script
+==============================
+
+The script assumes that the MPI installation on the cluster integrates well
+with the scheduler, i.e. it is assumed that the ``mpirun`` command can be
+called without specifying the number of processes or the host names. E.g.,
+these assumptions are satisfied by recent versions of OpenMPI.
+
 Modifications
 =============
 
