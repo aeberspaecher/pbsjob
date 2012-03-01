@@ -172,7 +172,7 @@ if(options.noMPI):
     command = args[0]
 else:
     command = "mpirun %s"%args[0]
-if(options.nCPUs):
+if(options.useNCPUs):
     ncpustring = "#PBS -l ncpus=%s"%(options.nodes*options.ppn)
 else:
     ncpustring = ""
