@@ -103,6 +103,11 @@ fil.close()
 
 devnull = open(os.devnull) # used for output redirection
 
+# check if script is executable, fail otherwise:
+if(not os.access(args[0], os.X_OK)):
+    print >> sys.stderr, "File %s is not executable! Aborting!"%args[0]
+    sys.exit(1)
+
 if(options.doClean): # *only* perform cleaning and then quit
     decision = raw_input("Remove *%s in %s:%s [y/n]? "%(suffix, login, workdir))
     if(decision in ["y", "yes", "Yes", "YES"]):
@@ -111,22 +116,25 @@ if(options.doClean): # *only* perform cleaning and then quit
         if(errcode != 0):
             print("Deletion of jobscripts failed!")
             sys.exit(1)
-            
     sys.exit(0)
 
+# prepare filename for copying:
 fileBaseName = args[0].split("/")[-1] # extract base name
+
+# prepare job name:
 if(not options.name):
     jobName = fileBaseName
     print("No job name given, using %s instead."%jobName)
 else:
     jobName = options.name
 
+# check if mandatory options are present:
 if(not options.nodes):
     parser.error("Specify the number of nodes using the --nodes option!")
 if(not options.ppn):
     parser.error("Specify the number of processes per nodes using the --ppn option!")
 
-# generate additional filenames if necessary:
+# generate input/output filenames if necessary:
 if(not options.stdoutFile):
     stdoutFile = jobName+".out"
     print("No file for stdout given, will use %s instead."%stdoutFile)
@@ -138,11 +146,7 @@ if(not options.stderrFile):
 else:
     stderrFile = options.stderrFile
 
-if(options.shared): # if shared is used, prepare a suitable string for jobscript
-    sharedString = "#shared"
-else:
-    sharedString = ""
-
+# check if an argument to execute is present:
 if(len(args) == 0):
     parser.error("Specify a file to run with PBS!")
 
@@ -158,26 +162,32 @@ if(errcode == 0): # file already exists, ask to overwrite
         doCopy = True
     else:
         doCopy = False
-
 if(doCopy):
     errcode = subprocess.call("scp %s %s:%s"%(fileBaseName, login, workdir),
                               stdout=devnull, stderr=devnull, shell=True,
                               cwd=os.environ["PWD"])
     if(errcode != 0):
-        print >> sys.stderr, "Something went wrong copying the program to be executed! Aborting!"
+        print >> sys.stderr,
+            "Something went wrong copying the program to be executed! Aborting!"
         sys.exit(1)
 
-# now generate a jobscript:
-# We assume OpenMPI in recent versions - in these versions, it is unnecessary
-# to specify the hostnames and number of processes
-if(options.noMPI):
-    command = args[0]
+# if option shared is used, prepare a suitable string for jobscript:
+if(options.shared):
+    sharedString = "#shared"
 else:
-    command = "mpirun %s"%args[0]
+    sharedString = ""
+
+# in case --ncpus is used, prepare a suitable string for inclusion in jobscript:
 if(options.useNCPUs):
     ncpustring = "#PBS -l ncpus=%s"%(options.nodes*options.ppn)
 else:
     ncpustring = ""
+
+# prepare command to run in jobscript:
+if(options.noMPI):
+    command = args[0]
+else:
+    command = "mpirun %s"%args[0]
 
 jobscript = \
 r"""#!/bin/sh
@@ -212,15 +222,15 @@ jobFile = tempfile.NamedTemporaryFile(suffix=suffix, dir="")
 jobFile.write(jobscript)
 jobFile.flush()
 
-# scp the jobscript to the remote
+# scp the jobscript to the remote:
 print("Copy jobscript to %s:%s"%(login, workdir))
-errcode = subprocess.call(["scp", "%s"%jobFile.name, "%s:%s"%(login, workdir)],
+errcode = subprocess.call(["scp", jobFile.name, "%s:%s"%(login, workdir)],
                 stdout=devnull, stderr=devnull)
 if(errcode != 0):
     print("Copying the jobscript failed, aborting!")
     sys.exit(1)
 
-# now, qsub the jobscript
+# now, qsub the jobscript:
 errcode = subprocess.call(["ssh", login, "cd %s; qsub %s"
                           %(workdir, jobFile.name.split("/")[-1])])
                           # extract jobscript file's basename
