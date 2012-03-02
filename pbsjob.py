@@ -167,7 +167,7 @@ if(doCopy):
                               stdout=devnull, stderr=devnull, shell=True,
                               cwd=os.environ["PWD"])
     if(errcode != 0):
-        print >> sys.stderr,
+        print >> sys.stderr,\
             "Something went wrong copying the program to be executed! Aborting!"
         sys.exit(1)
 
