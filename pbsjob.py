@@ -103,11 +103,6 @@ fil.close()
 
 devnull = open(os.devnull) # used for output redirection
 
-# check if script is executable, fail otherwise:
-if(not os.access(args[0], os.X_OK)):
-    print >> sys.stderr, "File %s is not executable! Aborting!"%args[0]
-    sys.exit(1)
-
 if(options.doClean): # *only* perform cleaning and then quit
     decision = raw_input("Remove *%s in %s:%s [y/n]? "%(suffix, login, workdir))
     if(decision in ["y", "yes", "Yes", "YES"]):
@@ -117,6 +112,11 @@ if(options.doClean): # *only* perform cleaning and then quit
             print("Deletion of jobscripts failed!")
             sys.exit(1)
     sys.exit(0)
+
+# check if script is executable, fail otherwise:
+if(not os.access(args[0], os.X_OK)):
+    print >> sys.stderr, "File %s is not executable! Aborting!"%args[0]
+    sys.exit(1)
 
 # prepare filename for copying:
 fileBaseName = args[0].split("/")[-1] # extract base name
