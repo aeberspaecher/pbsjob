@@ -113,6 +113,10 @@ if(options.doClean): # *only* perform cleaning and then quit
             sys.exit(1)
     sys.exit(0)
 
+# check if a script to execute was given
+if(len(args) == 0):
+    parser.error("No script name given!")
+
 # check if script is executable, fail otherwise:
 if(not os.access(args[0], os.X_OK)):
     print >> sys.stderr, "File %s is not executable! Aborting!"%args[0]
@@ -204,6 +208,8 @@ r"""#!/bin/sh
 #PBS -q %s
 #PBS -p %s
 
+echo $LD_LIBRARY_PATH
+echo $PATH
 . $HOME/.bashrc
 
 echo Working directory $PBS_O_WORKDIR
