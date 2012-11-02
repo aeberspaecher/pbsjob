@@ -18,10 +18,10 @@ line options. Finally, the jobscript will be submitted.
 """
 
 from optparse import OptionParser
-from subprocess import Popen
 import subprocess
 import tempfile
-import os, sys
+import os
+import sys
 
 # parse command line options:
 usage = "usage: %prog -n value -p value. Get help with --help."
@@ -101,9 +101,9 @@ if(suffix == ""):
 
 fil.close()
 
-devnull = open(os.devnull) # used for output redirection
+devnull = open(os.devnull)  # used for output redirection
 
-if(options.doClean): # *only* perform cleaning and then quit
+if(options.doClean):  # *only* perform cleaning and then quit
     decision = raw_input("Remove *%s in %s:%s [y/n]? "%(suffix, login, workdir))
     if(decision in ["y", "yes", "Yes", "YES"]):
         errcode = subprocess.call("ssh %s rm %s/*%s"%(login, workdir.strip(), suffix),
@@ -123,7 +123,7 @@ if(not os.access(args[0], os.X_OK)):
     sys.exit(1)
 
 # prepare filename for copying:
-fileBaseName = args[0].split("/")[-1] # extract base name
+fileBaseName = args[0].split("/")[-1]  # extract base name
 
 # prepare job name:
 if(not options.name):
@@ -158,8 +158,8 @@ if(len(args) == 0):
 # remote directory - if so, prompt before it is overwritten
 errcode = subprocess.call(["ssh", login, "ls", "%s/%s"%(workdir, fileBaseName)],
                           stdout=devnull, stderr=devnull)
-doCopy = True # assume a file has to be copied first
-if(errcode == 0): # file already exists, ask to overwrite
+doCopy = True  # assume a file has to be copied first
+if(errcode == 0):  # file already exists, ask to overwrite
     decision = raw_input("The file %s already exists in the remote location!\nOverwrite [y/n]? Answering 'n' will use the remote file as is. "%args[0])
 
     if(decision in ["y", "Y", "yes", "Yes", "YES"]):
