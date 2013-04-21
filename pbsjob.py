@@ -59,25 +59,22 @@ settingsFileName = "pbsjob.dat"
 # user@login.machine.tld
 # workingDirectoryOnRemoteMachine
 try:
-    if(settingsDirectory[-1] != "/"):
+    if(not settingsDirectory.endswith('/')):
         settingsDirectory += "/"
     fil = open(settingsDirectory+settingsFileName)
 except:
-    print >> sys.stderr, "Could not open settings file!"
-    sys.exit(1)
+    raise Exception("Could not open settings file!")
 
 try:
     login = fil.readline().strip()
 except:
-    print >> sys.stderr, "Could not read host from %s"%fil
-    sys.exit(1)
+    raise Exception("Could not read host from %s"%fil)
 
 try:
     workdir = fil.readline().strip()
 except:
     workdir = os.environ["PWD"]
     print("No working directory specified, using %s instead."%workdir)
-    sys.exit(1)
 
 try:
     suffix = fil.readline().strip()
@@ -109,8 +106,7 @@ if(options.doClean):  # *only* perform cleaning and then quit
         errcode = subprocess.call("ssh %s rm %s/*%s"%(login, workdir.strip(), suffix),
                                   shell=True)
         if(errcode != 0):
-            print("Deletion of jobscripts failed!")
-            sys.exit(1)
+            raise OSError("Deletion of jobscripts failed!")
     sys.exit(0)
 
 # check if a script to execute was given
@@ -119,8 +115,7 @@ if(len(args) == 0):
 
 # check if script is executable, fail otherwise:
 if(not os.access(args[0], os.X_OK)):
-    print >> sys.stderr, "File %s is not executable! Aborting!"%args[0]
-    sys.exit(1)
+    raise Exception("File %s is not executable! Aborting!"%args[0])
 
 # prepare filename for copying:
 fileBaseName = args[0].split("/")[-1]  # extract base name
@@ -171,9 +166,7 @@ if(doCopy):
                               stdout=devnull, stderr=devnull, shell=True,
                               cwd=os.environ["PWD"])
     if(errcode != 0):
-        print >> sys.stderr,\
-            "Something went wrong copying the program to be executed! Aborting!"
-        sys.exit(1)
+        raise OSError("Something went wrong copying the program to be executed! Aborting!")
 
 # if option shared is used, prepare a suitable string for jobscript:
 if(options.shared):
@@ -233,15 +226,14 @@ print("Copy jobscript to %s:%s"%(login, workdir))
 errcode = subprocess.call(["scp", jobFile.name, "%s:%s"%(login, workdir)],
                 stdout=devnull, stderr=devnull)
 if(errcode != 0):
-    print("Copying the jobscript failed, aborting!")
-    sys.exit(1)
+    raise OSError("Copying the jobscript failed, aborting!")
 
 # now, qsub the jobscript:
 errcode = subprocess.call(["ssh", login, "cd %s; qsub %s"
                           %(workdir, jobFile.name.split("/")[-1])])
                           # extract jobscript file's basename
 if(errcode != 0):
-    print >> sys.stderr, "Something went wrong submitting the job! Aborting!"
+    raise Exception("Something went wrong submitting the job! Aborting!")
 else:
     print("Job submitted, using %s CPUs in total."%(options.nodes*options.ppn))
 
