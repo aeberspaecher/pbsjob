@@ -26,10 +26,10 @@ Usage
 Configuration
 -------------
 
-The script reads ``~/pbsjob.dat`` on your local machine. The file shall contain
-your username and the URL for the remote machine, the working directory on the
-login node as well as a suffix for jobscript filenames. An example is given
-here::
+The script reads ``~/pbsjob.dat`` (or a file given by the user, see below) on
+your local machine. The file shall contain your username and the URL for the
+remote machine, the working directory on the login node as well as a suffix for
+jobscript filenames. An example is given here::
 
   user@machine.domain
   remoteFolder
@@ -83,6 +83,9 @@ You can get help by typing
 
 Additional options
 ------------------
+
+- The ``--config`` options allows you to use a custom config file location. If
+  not given, ``~/pbsjob.dat`` will be assumed.
 
 - The ``--clean`` option deletes all remote files suffixed by the string
   given in the configuration file, i.e.
