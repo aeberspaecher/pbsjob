@@ -14,7 +14,7 @@ The script will copy the argument file to a temporary file in the remote's
 work directory and generate a jobscript using information given as a command
 line options. Finally, the jobscript will be submitted.
 
-(c) 2012 Alexander Eberspächer
+(c) 2012-2013 Alexander Eberspächer
 """
 
 from optparse import OptionParser
@@ -32,11 +32,11 @@ parser.add_option("--ppn", action="store", dest="ppn", type="int",
                   help="Number of processes per node.")
 parser.add_option("--name", action="store", dest="name", type="string",
                   help="Job name.")
-parser.add_option("--clean", action="store_true", dest="doClean",
+parser.add_option("--clean", action="store_true", dest="do_clean",
                   help="Clean jobscripts on the remote and quit.")
-parser.add_option("--stdout", action="store", dest="stdoutFile", type="string",
+parser.add_option("--stdout", action="store", dest="std_out_file", type="string",
                   help="Write stdout to this file.")
-parser.add_option("--stderr", action="store", dest="stderrFile", type="string",
+parser.add_option("--stderr", action="store", dest="std_err_file", type="string",
                   help="Write stderr to this file.")
 parser.add_option("--shared", action="store_true", default=False,
                   dest="shared", help="""Share the nodes.""")
@@ -44,24 +44,24 @@ parser.add_option("--walltime", action="store", default=100,
                   dest="walltime", help="""Walltime in hours.""")
 parser.add_option("--queue", action="store", dest="queue", type="string",
                   default="parallel", help="Name of the queue to use.")
-parser.add_option("--nompi", action="store_true", default=False,
-                  dest="noMPI", help="""Do not use MPI.""")
+parser.add_option("--no_MPI", action="store_true", default=False,
+                  dest="no_MPI", help="""Do not use MPI.""")
 parser.add_option("--ncpus", action="store_true", default=False,
-                  dest="useNCPUs", help="""Include ncpus in jobscript.""")
+                  dest="num_cpus", help="""Include ncpus in jobscript.""")
 parser.add_option("--priority", action="store", dest="priority", type="int",
                   default=0, help="Process priority.")
 (options, args) = parser.parse_args()
 
 # obtain login information from file:
-settingsDirectory = os.environ["HOME"]
-settingsFileName = "pbsjob.dat"
-# The file shall contain the lines
+settings_dir = os.environ["HOME"]
+settings_filename = "pbsjob.dat"
+# The file shall contain the lines:
 # user@login.machine.tld
 # workingDirectoryOnRemoteMachine
 try:
-    if(not settingsDirectory.endswith('/')):
-        settingsDirectory += "/"
-    fil = open(settingsDirectory+settingsFileName)
+    if(not settings_dir.endswith('/')):
+        settings_dir += "/"
+    fil = open(settings_dir+settings_filename)
 except:
     raise Exception("Could not open settings file!")
 
@@ -100,7 +100,7 @@ fil.close()
 
 devnull = open(os.devnull)  # used for output redirection
 
-if(options.doClean):  # *only* perform cleaning and then quit
+if(options.do_clean):  # *only* perform cleaning and then quit
     decision = raw_input("Remove *%s in %s:%s [y/n]? "%(suffix, login, workdir))
     if(decision in ["y", "yes", "Yes", "YES"]):
         errcode = subprocess.call("ssh %s rm %s/*%s"%(login, workdir.strip(), suffix),
@@ -109,20 +109,24 @@ if(options.doClean):  # *only* perform cleaning and then quit
             raise OSError("Deletion of jobscripts failed!")
     sys.exit(0)
 
-# check if a script to execute was given
+# check if a script to execute was given:
 if(len(args) == 0):
     parser.error("No script name given!")
+
+# check if script exists:
+if(not os.path.exists(args[0])):
+    raise Exception("Script %s does not exist! Aborting!"%args[0])
 
 # check if script is executable, fail otherwise:
 if(not os.access(args[0], os.X_OK)):
     raise Exception("File %s is not executable! Aborting!"%args[0])
 
 # prepare filename for copying:
-fileBaseName = args[0].split("/")[-1]  # extract base name
+file_basename = args[0].split("/")[-1]  # extract base name
 
 # prepare job name:
 if(not options.name):
-    jobName = fileBaseName
+    jobName = file_basename
     print("No job name given, using %s instead."%jobName)
 else:
     jobName = options.name
@@ -134,16 +138,16 @@ if(not options.ppn):
     parser.error("Specify the number of processes per nodes using the --ppn option!")
 
 # generate input/output filenames if necessary:
-if(not options.stdoutFile):
-    stdoutFile = jobName+".out"
-    print("No file for stdout given, will use %s instead."%stdoutFile)
+if(not options.std_out_file):
+    std_out_file = jobName+".out"
+    print("No file for stdout given, will use %s instead."%std_out_file)
 else:
-    stdoutFile = options.stdoutFile
-if(not options.stderrFile):
-    stderrFile = jobName+".err"
-    print("No file for stderr given, will use %s instead."%stderrFile)
+    std_out_file = options.std_out_file
+if(not options.std_err_file):
+    std_err_file = jobName + ".err"
+    print("No file for stderr given, will use %s instead."%std_err_file)
 else:
-    stderrFile = options.stderrFile
+    std_err_file = options.std_err_file
 
 # check if an argument to execute is present:
 if(len(args) == 0):
@@ -151,7 +155,7 @@ if(len(args) == 0):
 
 # now try to find out if the script/program to execute already exits in the
 # remote directory - if so, prompt before it is overwritten
-errcode = subprocess.call(["ssh", login, "ls", "%s/%s"%(workdir, fileBaseName)],
+errcode = subprocess.call(["ssh", login, "ls", "%s/%s"%(workdir, file_basename)],
                           stdout=devnull, stderr=devnull)
 doCopy = True  # assume a file has to be copied first
 if(errcode == 0):  # file already exists, ask to overwrite
@@ -162,7 +166,7 @@ if(errcode == 0):  # file already exists, ask to overwrite
     else:
         doCopy = False
 if(doCopy):
-    errcode = subprocess.call("scp %s %s:%s"%(fileBaseName, login, workdir),
+    errcode = subprocess.call("scp %s %s:%s"%(file_basename, login, workdir),
                               stdout=devnull, stderr=devnull, shell=True,
                               cwd=os.environ["PWD"])
     if(errcode != 0):
@@ -170,18 +174,18 @@ if(doCopy):
 
 # if option shared is used, prepare a suitable string for jobscript:
 if(options.shared):
-    sharedString = "#shared"
+    shared_string = "#shared"
 else:
-    sharedString = ""
+    shared_string = ""
 
 # in case --ncpus is used, prepare a suitable string for inclusion in jobscript:
-if(options.useNCPUs):
-    ncpustring = "#PBS -l ncpus=%s"%(options.nodes*options.ppn)
+if(options.num_cpus):
+    num_cpu_string = "#PBS -l ncpus=%s"%(options.nodes*options.ppn)
 else:
-    ncpustring = ""
+    num_cpu_string = ""
 
 # prepare command to run in jobscript:
-if(options.noMPI):
+if(options.no_MPI):
     command = args[0]
 else:
     command = "mpirun %s"%args[0]
@@ -211,10 +215,9 @@ echo "Host"
 hostname
 
 %s
-"""\
-%(jobName, stdoutFile, stderrFile, options.nodes, options.ppn,
-  sharedString, options.walltime, ncpustring, options.queue, options.priority,
-  command)
+"""%(jobName, std_out_file, std_err_file, options.nodes, options.ppn,
+     shared_string, options.walltime, num_cpu_string, options.queue, options.priority,
+     command)
 
 # write jobscript to a temporary file:
 jobFile = tempfile.NamedTemporaryFile(suffix=suffix, dir="")
@@ -224,14 +227,16 @@ jobFile.flush()
 # scp the jobscript to the remote:
 print("Copy jobscript to %s:%s"%(login, workdir))
 errcode = subprocess.call(["scp", jobFile.name, "%s:%s"%(login, workdir)],
-                stdout=devnull, stderr=devnull)
+                          stdout=devnull, stderr=devnull)
 if(errcode != 0):
     raise OSError("Copying the jobscript failed, aborting!")
 
 # now, qsub the jobscript:
-errcode = subprocess.call(["ssh", login, "cd %s; qsub %s"
-                          %(workdir, jobFile.name.split("/")[-1])])
-                          # extract jobscript file's basename
+job_script_basename = jobFile.name.split("/")[-1]
+errcode = subprocess.call(["ssh",
+                           login,
+                           "cd %s; qsub %s"%(workdir, job_script_basename)
+                           ])
 if(errcode != 0):
     raise Exception("Something went wrong submitting the job! Aborting!")
 else:
