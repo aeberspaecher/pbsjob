@@ -4,15 +4,14 @@
 """Create jobscripts for the PBS scheduler and submit them on a given host
 (typically the login node of a cluster).
 
-The name of the login node is read from a plain text file (~/pbsjob.dat).
-The working directory on the remote machine is also given in that file.
-Furthermore, a suffix for jobscripts may as well be given.
-Modifictations to the file's name and location have to be performed in the
-source code.
+The name of the login node is read from a plain text file (~/pbsjob.dat by
+default). The working directory on the remote machine is also given in that
+file. Furthermore, a suffix for jobscripts may as well be given. Modifictations
+to the file's name and location have to be performed in the source code.
 
-The script will copy the argument file to a temporary file in the remote's
-work directory and generate a jobscript using information given as a command
-line options. Finally, the jobscript will be submitted.
+The script will copy the argument file to a temporary file in the remote's work
+directory and generate a jobscript using information given as a command line
+options. Finally, the jobscript will be submitted.
 
 (c) 2012-2013 Alexander Eberspächer
 """
@@ -50,20 +49,27 @@ parser.add_option("--ncpus", action="store_true", default=False,
                   dest="num_cpus", help="""Include ncpus in jobscript.""")
 parser.add_option("--priority", action="store", dest="priority", type="int",
                   default=0, help="Process priority.")
+parser.add_option("--config", action="store", default=None,
+                  dest="config_file", help="""Config file.""")
 (options, args) = parser.parse_args()
 
 # obtain login information from file:
-settings_dir = os.environ["HOME"]
-settings_filename = "pbsjob.dat"
+if(options.config_file is None):
+    settings_dir = os.environ["HOME"]
+    settings_filename = "pbsjob.dat"
+    if(not settings_dir.endswith('/')):
+        settings_dir += "/"
+    config_file = settings_dir+settings_filename
+else:
+    config_file = options.config_file
+
 # The file shall contain the lines:
 # user@login.machine.tld
 # workingDirectoryOnRemoteMachine
-try:
-    if(not settings_dir.endswith('/')):
-        settings_dir += "/"
-    fil = open(settings_dir+settings_filename)
-except:
-    raise Exception("Could not open settings file!")
+if(not os.path.exists(config_file)):
+    raise Exception("Could not open config file %s! Aborting!"%config_file[0])
+
+fil = open(config_file, "r")
 
 try:
     login = fil.readline().strip()
