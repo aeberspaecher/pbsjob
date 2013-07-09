@@ -131,6 +131,12 @@ with the scheduler, i.e. it is assumed that the ``mpirun`` command can be
 called without specifying the number of processes or the host names. E.g.,
 these assumptions are satisfied by recent versions of OpenMPI.
 
+Also, as described above, pbsjob assumes you are submitting a script - not a
+call to an executable. Consider wrapping your call in a shell script in case
+you don't want to transfer a executable local to your workstation or you need a
+call to an executable found somewhere in $PATH (think of ``python
+my_script.py``).
+
 Modifications
 =============
 
